@@ -6,7 +6,7 @@ stock availability & prices.
 
 Usage: 
 1) bom_jlc.php check [file.csv] [jlc_part_number_column_name] [bom_part_number_column_name] [bom_package_column_name]
-2) bom_jlc.php stock [file.csv] [jlc_part_number_column_name] [num_of_parts_column_name] [num_boards] [add_cost_of_manufacturing] [add_cost_of_each_exp_parttype]
+2) bom_jlc.php stock [file.csv] [jlc_part_number_column_name] [designator_column_name] [num_boards] [add_cost_of_manufacturing] [add_cost_of_each_exp_parttype]
 
 Copyright (c) 2020 andreika <prometheus.pcb@gmail.com>
 
@@ -61,7 +61,7 @@ if (isCheck()) {
 		echo "Wrong arguments! Please see Usage examples.\r\n";
 		die;
 	}
-	$csvNumColName = $argv[4];
+	$csvDesignatorColName = $argv[4];
 	$numBoards = intval($argv[5]);
 	$addCostMan = floatval($argv[6]);
 	$addCostExp = floatval($argv[7]);
@@ -95,7 +95,7 @@ for ($row = 0; (($data = fgetcsv($handle, 1000, $delim)) !== FALSE); $row++) {
 			$csvNameCol = findColumn($csvNameColName, $data);
 			$csvPackageCol = findColumn($csvPackageColName, $data);
 		} else if (isStock()) {
-			$csvNumCol = findColumn($csvNumColName, $data);
+			$csvDesignatorCol = findColumn($csvDesignatorColName, $data);
 		}
 		continue;
 	}
@@ -110,7 +110,9 @@ for ($row = 0; (($data = fgetcsv($handle, 1000, $delim)) !== FALSE); $row++) {
 		echo "[".$row. "] " . $partNumber . " {BOM} " . $data[$csvNameCol] . " [". $data[$csvPackageCol] . "] === {JLC} " . $partJlcName. "\r\n";
 	}
 	else if (isStock()) {
-	    $numberOfParts = $data[$csvNumCol] * $numBoards;
+	    $designators = explode(",", $data[$csvDesignatorCol]);
+	    $numPartsPerBoard = count($designators);
+	    $numberOfParts = $numPartsPerBoard * $numBoards;
 		$stock = getStock($part);
 		$price = getPrice($part, $numberOfParts);
 		$addType = $stock > 0 ? ($price["isBase"] ? "(base)" : "+$".$addCostExp."(exp)") : "";
