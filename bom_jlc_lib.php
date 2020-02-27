@@ -38,10 +38,14 @@ function getJLCdata($partNumber) {
 		die;
 	}
 
+	if (!extension_loaded("json")) {
+		echo "JSON not found! Please install PHP-JSON extension!\r\n";
+		die;
+	}
 	try {
 		$partData = json_decode($jsonData);
 	} catch (Exception $e) {
-		echo "JSON Decode error! Please install PHP-JSON extension!\r\n";
+		echo "JSON Decode error!\r\n";
 		die;
 	}
 	return $partData;
