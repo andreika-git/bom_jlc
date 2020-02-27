@@ -117,7 +117,10 @@ for ($row = 0; (($data = fgetcsv($handle, 1000, $delim)) !== FALSE); $row++) {
 		$price = getPrice($part, $numberOfParts);
 		$addType = $stock > 0 ? ($price["isBase"] ? "(base)" : "+$".$addCostExp."(exp)") : "";
 		echo "[".$row. "] " . $partNumber . " Stock=" . $stock . " Price=$" . $price["price"] . " [Min:". $price["minNum"] . "] x ".$numberOfParts."pcs ".$addType. "\r\n";
-		if ($stock <= 0) {
+		if (strlen($partNumber) < 2) {
+			echo "  *** Skipping empty part number!\r\n";
+		}
+		else if ($stock <= 0) {
 			echo "  *** WARNING! Not in stock!\r\n";
 			$noStock = TRUE;
 		}
