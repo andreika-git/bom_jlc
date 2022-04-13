@@ -23,31 +23,71 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-
-function getJLCdata($partNumber) {
-	$url = "https://jlcpcb.com/shoppingCart/smtGood/getComponentDetail?componentCode=";
-	try {
-		$jsonData = file_get_contents($url . $partNumber);
-
-	    if ($jsonData === false) {
-    		echo "Error!\r\n";
-	    	die;
-	    }
-	} catch (Exception $e) {
-		echo "Exception!\r\n";
-		die;
-	}
-
+function getJson($url, $query) {
 	if (!extension_loaded("json")) {
 		echo "JSON not found! Please install PHP-JSON extension!\r\n";
 		die;
 	}
+
 	try {
-		$partData = json_decode($jsonData);
+		$context = NULL;
+		if ($query !== NULL) {
+			$options = array('http' => array(
+		    	'method'  => 'POST',
+		    	'content' => json_encode($query),
+		    	'header'  => "Content-Type: application/json\r\nAccept: application/json\r\n"
+		    ));
+			$context = stream_context_create($options);
+		}
+		$jsonRawData = file_get_contents($url, false, $context);
+	    if ($jsonRawData === false) {
+    		echo "Error!\r\n";
+	    	die;
+	    }
+		$jsonData = json_decode($jsonRawData);
 	} catch (Exception $e) {
-		echo "JSON Decode error!\r\n";
+		echo "Exception!\r\n";
+		print_r($e);
 		die;
 	}
+	return $jsonData;
+}
+
+function getJLCdata($partNumber) {
+
+	// this is getting much harder... :(
+
+	// 1. First search the part number
+	$searchQuery = array(
+		"currentPage" => 1,
+		"pageSize" => 25,
+		"keyword" => $partNumber,
+		"firstSortName" => "",
+		"secondeSortName" => "",
+		"searchSource" => "search",
+		"componentAttributes" => array()
+	);
+		
+	$jsonData = getJson("https://jlcpcb.com/shoppingCart/smtGood/selectSmtComponentList", $searchQuery);
+
+	// 2. find our component in the list
+	$lcsc_id = -1;
+	$list = $jsonData->data->componentPageInfo->list;
+	foreach ($list as $l) {
+		if ($l->componentCode == $partNumber) {
+			$lcsc_id = intval($l->componentId);
+			break;
+		}
+	}
+
+	if ($lcsc_id < 1) {
+		echo "Error! Component $partNumber was not found on JLCPCB!\r\n";
+    	die;
+	}
+
+	// 3. Get component details
+	$timestamp = round(microtime(true) * 1000);
+	$partData = getJson("https://jlcpcb.com/shoppingCart/smtGood/getComponentDetail?componentLcscId=" . $lcsc_id . "&t=" . $timestamp, NULL);
 	return $partData;
 }
 

@@ -43,7 +43,7 @@ $command = $argv[1];
 $csvFile = $argv[2];
 $csvPartColName = $argv[3];
 
-echo "BOM_JLC (c) andreika, 2020.\r\n";
+echo "BOM_JLC (c) andreika, 2020-2022.\r\n";
 echo "Checking BOM file for JLCPCB stock & prices!\r\n";
 echo "DISCLAIMER: All data output is estimated and advisory, use it on your own risk! Please see LICENSE...\r\n\r\n";
 
@@ -101,6 +101,10 @@ for ($row = 0; (($data = fgetcsv($handle, 1000, $delim)) !== FALSE); $row++) {
 	}
 	// get data
     $partNumber = $data[$csvPartCol];
+    if (trim($partNumber) == "") {
+    	//echo "  *** Skipping empty part number for ".$data[$csvNameCol]."!\r\n";
+    	continue;
+    }
 	$part = getJLCdata($partNumber);
 	saveJson($partNumber, $part);
 
